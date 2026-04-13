@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-class GameViewModel : ViewModel() {
+class GameViewModel : ViewModel(), GameActions {
     private val _money = MutableStateFlow(0L)
     val money: StateFlow<Long> = _money.asStateFlow()
 
@@ -22,79 +22,65 @@ class GameViewModel : ViewModel() {
     private val _isGameOver = MutableStateFlow(false)
     val isGameOver: StateFlow<Boolean> = _isGameOver.asStateFlow()
 
+    private val _isGamePaused = MutableStateFlow(false)
+    val isGamePaused: StateFlow<Boolean> = _isGamePaused.asStateFlow()
+
+    var maxAllowedHappiness = 100
+        private set
+
     var maxHappiness = 100
-    val minHappy = 60
-    val minNeutral = 30
+        private set
+
+    private val minHappy = 60
+    private val minNeutral = 30
+
+    val availableUpgrades = UpgradesProvider.getUpgrades(this)
 
     init {
         startGameLoops()
     }
 
-    val availableUpgrades = listOf(
-        Upgrade(
-            id = 1, name = "Residência", baseCost = 50, iconResId = R.drawable.happy,
-            onPurchase = { _population.value += 20 }
-        ),
-        Upgrade(
-            id = 2, name = "Comércio", baseCost = 250, iconResId = R.drawable.neutral,
-            onTick = { count, _ -> _money.value += (4L * count) }
-        ),
-        Upgrade(
-            id = 3, name = "Entretenimento", baseCost = 1200, iconResId = R.drawable.happy,
-            onTick = { count, _ ->
-                _money.value += (5L * count)
-                addHappiness(1 * count)
-            }
-        ),
-        Upgrade(
-            id = 4, name = "Indústria", baseCost = 4500, iconResId = R.drawable.angry,
-            onPurchase = {
-                maxHappiness -= 5
-                if (_happiness.value > maxHappiness) _happiness.value = maxHappiness
-            },
-            onTick = { count, isAngry ->
-                val income = if (isAngry) 17L else 35L
-
-                _money.value += (income * count)
-                addHappiness(-2 * count)
-            }
-        ),
-        Upgrade(
-            id = 5, name = "Parque", baseCost = 8000, iconResId = R.drawable.happy,
-            onPurchase = {
-                maxHappiness = (maxHappiness + 5).coerceAtMost(100)
-            },
-            onTick = { count, _ ->
-                addHappiness(2 * count)
-            }
-        )
-    )
-
     private fun startGameLoops() {
-        viewModelScope.launch {
-            while (isActive) {
-                delay(2000)
-                addHappiness(1)
-            }
-        }
-
         viewModelScope.launch {
             while (isActive) {
                 delay(1000)
 
-                val isAngry = _happiness.value < minNeutral
+                if (!isGameStopped()) {
+                    addHappiness(1)
+                    val isAngry = _happiness.value < minNeutral
 
-                availableUpgrades.forEach { upgrade ->
-                    if (upgrade.count > 0) {
-                        upgrade.onTick(upgrade.count, isAngry)
+                    availableUpgrades.forEach { upgrade ->
+                        if (upgrade.count > 0) {
+                            upgrade.onTick(upgrade.count, isAngry)
+                        }
                     }
                 }
             }
         }
     }
 
-    private fun addHappiness(amount: Int) {
-        if (_isGameOver.value) return
+    private fun isGameStopped(): Boolean {
+        return _isGamePaused.value || _isGameOver.value
+    }
+
+    override fun addPopulation(amount: Int) {
+        _population.value += amount
+    }
+
+    override fun addMoney(amount: Long) {
+        _money.value += amount
+    }
+
+    override fun changeMaxHappiness(amount: Int) {
+        maxHappiness = (maxHappiness + amount).coerceAtMost(maxAllowedHappiness)
+
+        if (_happiness.value > maxHappiness) {
+            _happiness.value = maxHappiness
+        }
+    }
+
+    override fun addHappiness(amount: Int) {
+        if (isGameStopped()) return
 
         val currentValue = _happiness.value
         val newValue = (currentValue + amount).coerceIn(0, maxHappiness)
@@ -109,7 +95,7 @@ class GameViewModel : ViewModel() {
     }
 
     fun collectTaxes() {
-        if (_isGameOver.value) return
+        if (isGameStopped()) return
 
         _money.value += _population.value / 10
         addHappiness(-1)
@@ -124,7 +110,7 @@ class GameViewModel : ViewModel() {
     }
 
     fun buyUpgrade(upgrade: Upgrade) {
-        if (_isGameOver.value) return
+        if (isGameStopped()) return
 
         if (_money.value >= upgrade.currentCost) {
             _money.value -= upgrade.currentCost
@@ -132,6 +118,14 @@ class GameViewModel : ViewModel() {
 
             upgrade.onPurchase()
         }
+    }
+
+    fun pauseGame() {
+        _isGamePaused.value = true
+    }
+
+    fun unpauseGame() {
+        _isGamePaused.value = false
     }
 
     fun restartGame() {
@@ -143,6 +137,7 @@ class GameViewModel : ViewModel() {
         availableUpgrades.forEach { it.count = 0 }
 
         _isGameOver.value = false
+        _isGamePaused.value = false
         startGameLoops()
     }
 }

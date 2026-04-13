@@ -1,6 +1,7 @@
 package com.msgiovanella.myapplication
 
 import android.app.AlertDialog
+import android.content.Intent
 import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.widget.ImageView
@@ -124,9 +125,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        upgradeAdapter = UpgradeAdapter(viewModel.availableUpgrades) { upgradeClicado ->
-            viewModel.buyUpgrade(upgradeClicado)
-        }
+        upgradeAdapter = UpgradeAdapter(
+            upgrades = viewModel.availableUpgrades,
+            onBuyClick = { upgrade ->
+                viewModel.buyUpgrade(upgrade)
+            },
+            onInfoClick = { upgrade ->
+                val intent = Intent(this, InfoActivity::class.java)
+
+                intent.putExtra("name", upgrade.name)
+                intent.putExtra("base_cost", upgrade.baseCost)
+                intent.putExtra("description", upgrade.description)
+                intent.putExtra("purchase_description", upgrade.purchaseDescription)
+                intent.putExtra("tick_description", upgrade.tickDescription)
+
+                startActivity(intent)
+            }
+        )
 
         binding.rvUpgrades.layoutManager = LinearLayoutManager(this)
         binding.rvUpgrades.adapter = upgradeAdapter
@@ -148,5 +163,41 @@ class MainActivity : AppCompatActivity() {
         viewModel.restartGame()
 
         upgradeAdapter.notifyDataSetChanged()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        println("(MainActivity) onStart")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        println("(MainActivity) onResume")
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        viewModel.pauseGame()
+
+        println("(MainActivity) onPause")
+    }
+
+    override fun onStop() {
+        super.onStop()
+        println("(MainActivity) onStop")
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+
+        viewModel.unpauseGame()
+
+        println("(MainActivity) onRestart")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        println("(MainActivity) onDestroy")
     }
 }

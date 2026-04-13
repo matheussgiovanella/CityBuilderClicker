@@ -1,6 +1,7 @@
 package com.msgiovanella.myapplication
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -10,7 +11,8 @@ import androidx.core.graphics.toColorInt
 
 class UpgradeAdapter(
     private val upgrades: List<Upgrade>,
-    private val onBuyClick: (Upgrade) -> Unit
+    private val onBuyClick: (Upgrade) -> Unit,
+    private val onInfoClick: (Upgrade) -> Unit
 ) : RecyclerView.Adapter<UpgradeAdapter.UpgradeViewHolder>() {
 
     var currentMoney: Long = 0L
@@ -24,7 +26,6 @@ class UpgradeAdapter(
         fun bind(upgrade: Upgrade) {
             binding.tvUpgradeName.text = "${upgrade.name} (${upgrade.count}x)"
             binding.tvUpgradeCost.text = "Custo $${upgrade.currentCost}"
-            binding.imgUpgradeIcon.setImageResource(upgrade.iconResId)
 
             binding.imgUpgradeIcon.drawable?.isFilterBitmap = false
 
@@ -37,6 +38,10 @@ class UpgradeAdapter(
             } else {
                 binding.btnBuy.setBackgroundColor("#888888".toColorInt())
                 binding.btnBuy.setTextColor(Color.LTGRAY)
+            }
+
+            binding.imgUpgradeIcon.setOnClickListener {
+                onInfoClick(upgrade)
             }
 
             binding.btnBuy.setOnClickListener {
