@@ -7,13 +7,19 @@
     android:layout_height="wrap_content"
     android:padding="8dp"
     android:layout_marginBottom="4dp"
-    android:background="#33000000"> <ImageView
-    android:id="@+id/imgUpgradeIcon"
-    android:layout_width="48dp"
-    android:layout_height="48dp"
-    android:src="@drawable/happy" app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="parent"
-    app:layout_constraintBottom_toBottomOf="parent" />
+    android:background="#33000000">
+
+    <ImageView
+        android:id="@+id/imgUpgradeIcon"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@drawable/info"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0"
+        app:srcCompat="@drawable/info"
+        tools:srcCompat="@drawable/info" />
 
     <TextView
         android:id="@+id/tvUpgradeName"
@@ -38,12 +44,25 @@
         app:layout_constraintStart_toEndOf="@id/imgUpgradeIcon"
         app:layout_constraintTop_toBottomOf="@id/tvUpgradeName" />
 
+    <TextView
+        android:id="@+id/tvHelpText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:text="Clique no ícone\npara mais informações"
+        android:textColor="#ffffff"
+        android:textSize="10sp"
+        app:layout_constraintStart_toEndOf="@id/imgUpgradeIcon"
+        app:layout_constraintTop_toBottomOf="@+id/tvUpgradeCost" />
+
     <Button
         android:id="@+id/btnBuy"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
         android:text="Comprar"
-        android:textSize="12sp"
+        android:textSize="8sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
